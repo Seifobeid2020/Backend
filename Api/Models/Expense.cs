@@ -11,7 +11,6 @@ namespace Api.Models
         public string ExpenseDescription { get; set; }
         public DateTime CreatedAt { get; set; }
         public string UserId { get; set; }
-
         public int ExpenseTypeId { get; set; }
         public virtual ExpenseType ExpenseType { get; set; }
     }

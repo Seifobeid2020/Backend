@@ -75,7 +75,7 @@ namespace Api.Repositories
         }
         public async Task<List<AdvanceReportViewModel>> GetAllWithTreatments()
         {
-            List<AdvanceReportViewModel> patients = (from patient in _context.Patients
+            return await (from patient in _context.Patients
                             join t in _context.Treatments on patient.PatientId equals t.PatientId
                             join ty in _context.TreatmentTypes on t.TreatmentTypeId equals ty.TreatmentTypeId
                             select new AdvanceReportViewModel()
@@ -85,31 +85,40 @@ namespace Api.Repositories
                                 Date = t.CreatedAt,
                                 Balance = t.TreatmentCost
                             }
-                            ).ToList();
-              
-            foreach (var patient in patients)
-            {
+                            ).ToListAsync();
+   
+                
+        }
 
-              
-            }
-                /* var result = new List<PatientViewModel>();
-                 foreach (var patient in patients)
-                 {
-                     var totalCost = patient.Treatments.Sum(t => t.TreatmentCost);
-                     result.Add(new PatientViewModel()
-                     {
-                         PatientId = patient.PatientId,
-                         UserId = patient.UserId,
-                         Age = patient.Age,
-                         Gender = patient.Gender,
-                         FirstName = patient.FirstName,
-                         LastName = patient.LastName,
-                         PhoneNumber = patient.PhoneNumber,
-                         TotalTreatmentCost = totalCost,
-                         CreatedAt = patient.CreatedAt
-                     });
-                 }*/
-                return patients;
+        public async Task<List<FivePatientViewModel>> GetLastFivePatients()
+        {
+            return await (from p in _context.Patients
+                          orderby p.CreatedAt descending
+                          select new FivePatientViewModel() {
+                              FullName = p.FirstName + " " + p.LastName ,
+                              Age = p.Age,
+                              Gender = p.Gender,
+                              PhoneNumber = p.PhoneNumber,
+                              CreatedAt =p.CreatedAt
+                          } ).Take(5).ToListAsync();
+        }
+
+        public async Task<decimal> GetNewWeeklyPatientsCount()
+        {
+            var lastWeek = DateTime.Now.AddDays(-7);
+            return await _context.Patients
+                                 .Where(p => DateTime.Compare(p.CreatedAt, lastWeek) >= 0).CountAsync();
+        }
+
+        public async Task<decimal> GetPatientsCount()
+        {
+            return await _context.Patients.CountAsync();
+        }
+
+        public async Task<decimal> GetTotalIncomes()
+        {
+           var treatments= await _context.Treatments.ToListAsync();
+           return treatments.Sum(tre => tre.TreatmentCost);
         }
 
         public async Task<Patient> Update(int id, Patient patient)

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Hh6YVmnfKpwgVXjQ+ElFor6Fy3L4eP2CM2LjZGkKT1B8ULkSkuAQ/2iPoTWgnQH7waQvqKgpok4r//Gg1bDQ9Q==",
+  "dgSpecHash": "DBy3YfngOg6UQjKrdh9wsDsjwajgQIrh1Uav8x9v0rKVO8kG0BFGKQZLZbhVNft2h6tmmSBJgTZR3mKH7YIl2w==",
   "success": true,
-  "projectFilePath": "D:\\DeNTAX\\V4\\Api\\Api.csproj",
+  "projectFilePath": "D:\\DeNTAX\\V4\\New folder\\Api\\Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\actc\\.nuget\\packages\\humanizer.core\\2.8.26\\humanizer.core.2.8.26.nupkg.sha512",
     "C:\\Users\\actc\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\3.1.1\\microsoft.aspnetcore.authentication.jwtbearer.3.1.1.nupkg.sha512",

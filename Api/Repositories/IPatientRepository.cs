@@ -15,5 +15,12 @@ namespace Api.Repositories
         Task<Patient> Add(Patient patient);
         Task<Patient> Update(int id, Patient patient);
         Task<Patient> Delete(int id);
+        Task<decimal> GetPatientsCount();
+        Task<decimal> GetTotalIncomes();
+        Task<decimal> GetNewWeeklyPatientsCount();
+        Task<List<FivePatientViewModel>> GetLastFivePatients();
+
+     
+
     }
 }

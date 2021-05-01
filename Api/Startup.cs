@@ -54,6 +54,8 @@ namespace Api
 
             services.AddScoped<IPatientRepository, PatientRepository>();
             services.AddScoped<IReportRepository, ReportRepository>();
+            services.AddScoped<IExpenseRepository, ExpenseRepository>();
+            services.AddScoped<IDashboardRepository, DashboardRepository>();
 
             services.AddAuthentication(options =>
             {
