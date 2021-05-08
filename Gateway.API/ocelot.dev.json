@@ -1,6 +1,5 @@
 {
   "Routes": [
-    //Dashboard Controller APIs
     {
       "DownstreamPathTemplate": "/api/Dashboard/{catchAll}",
       "DownstreamScheme": "https",
@@ -11,11 +10,8 @@
         }
       ],
       "UpstreamPathTemplate": "/gateway/Dashboard/{catchAll}",
-      "UpstreamHttpMethod": [ "Get" ]
-
-     },
-    //ExpenseTypes Controller APIs
-            //ExpenseTypes Controller for Get , Post , Put
+      "UpstreamHttpMethod": ["Get"]
+    },
     {
       "DownstreamPathTemplate": "/api/ExpenseTypes/{catchAll}",
       "DownstreamScheme": "https",
@@ -26,13 +22,9 @@
         }
       ],
       "UpstreamPathTemplate": "/gateway/Dashboard/{catchAll}/{id}",
-      "UpstreamHttpMethod": [ "Get", "POST", "PUT" ]
-
+      "UpstreamHttpMethod": ["Get", "POST", "PUT"]
     }
-         //ExpenseTypes Controller for Get , Post , Put
-
   ],
-  //Global Configuration for this Ocelot project 
   "GlobalConfiguration": {
     "BaseUrl": "https://localhost:5021"
   }
