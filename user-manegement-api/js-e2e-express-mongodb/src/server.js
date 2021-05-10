@@ -1,87 +1,83 @@
 // general dependencies
 const express = require('express');
 const render = require('express-react-views');
-const bodyParser = require('body-parser');
 const path = require('path');
+const userRouter = require('./routes/userRouter'); // Load user router module
 
 // data dependency
 const data = require('./data');
 
-
 const timeStamp = (req) => {
-    const date = new Date();
-    const currentTimeStamp = date.getTime();
-    console.log(`${currentTimeStamp} - ${req.protocol}//${req.headers.host}${req.originalUrl}`);
+  const date = new Date();
+  const currentTimeStamp = date.getTime();
+  console.log(
+    `${currentTimeStamp} - ${req.protocol}//${req.headers.host}${req.originalUrl}`
+  );
 };
 
 const create = async () => {
+  const dbConnected = await data.connectToDatabase();
 
-    const dbConnected = await data.connectToDatabase();
+  const app = express();
+  app.use(express.static('public'));
+  app.set('views', path.join(__dirname, './views'));
+  app.set('view engine', 'jsx');
+  app.engine('jsx', render.createEngine({ beautify: true }));
+  // Display form and table
+  app.get('/', async (req, res) => {
+    timeStamp(req);
 
-    const app = express();
-    app.use(bodyParser.urlencoded({ extended: true }));
-    app.use(express.static('public'));
-    app.set('views', path.join(__dirname, './views'));
-    app.set('view engine', 'jsx');
-    app.engine(
-        'jsx',
-        render.createEngine({ beautify: true })
-    );
-    // Display form and table
-    app.get('/', async (req, res) => {
+    const initialData = {
+      data: [],
+      dbStatus: !!dbConnected,
+    };
 
-        timeStamp(req);
+    // get all items
+    initialData.data = dbConnected ? await data.findDocuments({}) : initialData;
 
-        const initialData = {
-            data: [],
-            dbStatus: !!dbConnected
-        };
+    // return react front-end
+    res.render('index', initialData);
+  });
+  // Insert row into table
+  app.post('/', async (req, res) => {
+    timeStamp(req);
 
-        // get all items
-        initialData.data = dbConnected
-            ? await data.findDocuments({})
-            : initialData;
+    // insert
+    if (req.body && Object.keys(req.body).length > 0) {
+      const newItem = [req.body];
 
-        // return react front-end
-        res.render('index', initialData);
-    });
-    // Insert row into table
-    app.post('/', async (req, res) => {
-        timeStamp(req);
+      // insert params to db
+      await data.insertDocuments(newItem);
+    }
 
-        // insert
-        if (req.body && Object.keys(req.body).length > 0) {
-            const newItem = [req.body];
+    // return react front-end
+    res.redirect('/');
+  });
+  // Delete 1 or all - depending on query string
+  app.get('/delete', async (req, res) => {
+    timeStamp(req);
 
-            // insert params to db
-            await data.insertDocuments(newItem);
-        }
+    const docs =
+      req.query && req.query.id ? { _id: data.ObjectId(req.query.id) } : {};
 
-        // return react front-end
-        res.redirect('/');
-    });
-    // Delete 1 or all - depending on query string
-    app.get('/delete', async (req, res) => {
-        timeStamp(req);
+    // delete
+    await data.removeDocuments(docs);
 
-        const docs = req.query && req.query.id ? { _id: data.ObjectId(req.query.id) } : {};
+    res.redirect('/');
+  });
 
-        // delete
-        await data.removeDocuments(docs);
+  app.use('/users', userRouter);
 
-        res.redirect('/');
-    });
+  // instead of 404 - just return home page
+  app.get('*', (req, res) => {
+    timeStamp(req);
 
-    // instead of 404 - just return home page
-    app.get('*', (req, res) => {
-        timeStamp(req);
+    res.redirect('/');
+  });
 
-        res.redirect('/');
-    });
-
-    return app;
+  return app;
 };
 
 module.exports = {
-    create
+  create,
 };

@@ -4,8 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Api.Data;
 using Api.Repositories;
+using FirebaseAdmin;
+using FirebaseAdmin.Auth;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,12 +18,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
-using Okta.AspNetCore;
 
 namespace Api
 {
     public class Startup
     {
+        static FirebaseApp App = null;
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -35,12 +39,12 @@ namespace Api
             {
                 options.UseNpgsql(Configuration.GetConnectionString("Default"));
             });
-            
+
             services.AddDbContext<ExpenseDbContext>(options =>
             {
                 options.UseNpgsql(Configuration.GetConnectionString("Default"));
             });
-            
+
 
             services.AddCors(options =>
             {
@@ -57,23 +61,11 @@ namespace Api
             services.AddScoped<IExpenseRepository, ExpenseRepository>();
             services.AddScoped<IDashboardRepository, DashboardRepository>();
 
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = OktaDefaults.ApiAuthenticationScheme;
-                options.DefaultChallengeScheme = OktaDefaults.ApiAuthenticationScheme;
-                options.DefaultSignInScheme = OktaDefaults.ApiAuthenticationScheme;
-            })
-            .AddOktaWebApi(new OktaWebApiOptions()
-            {
-                OktaDomain = Configuration["Okta:OktaDomain"],
-            });
-
-            services.AddAuthorization();
 
             services.AddControllers()
                 .AddNewtonsoftJson(options =>
                     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
-        
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
@@ -83,6 +75,47 @@ namespace Api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+
+            app.Use(async (context, next) =>
+            {
+                if (App == null)
+                {
+                    App = FirebaseApp.Create(new AppOptions()
+                    {
+                        Credential = GoogleCredential.FromFile("serviceAccountKey.json"),
+                    });
+                }
+
+
+                FirebaseAuth auth = FirebaseAuth.GetAuth(App);
+                try
+                {
+                    var idToken = context.Request.Headers["Authorization"].ToString();
+                    if (!string.IsNullOrWhiteSpace(idToken))
+                    {
+                        idToken = idToken.Split("key ")[1];
+                        FirebaseToken decodedToken = await auth.VerifyIdTokenAsync(idToken);
+
+                        Console.WriteLine(decodedToken);
+                        if (decodedToken != null)
+                        {
+                            await next.Invoke();
+                        }
+                    }
+                    else
+                    {
+                        context.Response.StatusCode = 400;
+                        await context.Response.WriteAsync($"Authorization token is required!");
+                    }
+                }
+                catch (FirebaseAuthException ex)
+                {
+                    context.Response.StatusCode = 401;
+                    await context.Response.WriteAsync($"Unauthorized: {ex.Message}");
+                }
+            });
+
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -93,10 +126,6 @@ namespace Api
             app.UseRouting();
 
             app.UseCors("AllowAll");
-
-            app.UseAuthentication();
-
-            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
