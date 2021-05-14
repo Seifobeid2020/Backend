@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using Api.Data;
 using Api.Models;
 using Api.Repositories;
+using FirebaseAdmin.Auth;
+using FirebaseAdmin;
 
 namespace Api.Controllers
 {
@@ -17,24 +19,25 @@ namespace Api.Controllers
     public class ExpensesController : ControllerBase
     {
         private readonly IExpenseRepository _repository;
-
+        private readonly FirebaseAuth auth;
         public ExpensesController(IExpenseRepository repository)
         {
             _repository = repository;
+            auth = FirebaseAuth.GetAuth(FirebaseApp.DefaultInstance);
         }
 
         // GET: api/Expenses
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses()
         {
-            return await _repository.GetAll();
+            return await _repository.GetAll(getUID().Result);
         }
 
         // GET: api/Expenses/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Expense>> GetExpense(int id)
         {
-            var expense = await _repository.Get(id);
+            var expense = await _repository.Get(getUID().Result, id);
 
             if (expense == null)
             {
@@ -68,7 +71,7 @@ namespace Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Expense>> PostExpense(Expense expense)
         {
-
+            expense.UserId = getUID().Result;    
             return await _repository.Add(expense);
         }
 
@@ -78,7 +81,7 @@ namespace Api.Controllers
         {
 
 
-            var expense = await _repository.Delete(id);
+            var expense = await _repository.Delete(getUID().Result,id);
             if (expense == null)
             {
                 return NotFound();
@@ -86,6 +89,14 @@ namespace Api.Controllers
             return expense;
         }
 
-       
+        private async Task<string> getUID()
+        {
+            var idToken = HttpContext.Request.Headers["Authorization"].ToString();
+            idToken = idToken.Split("key ")[1];
+            FirebaseToken decodedToken = await auth.VerifyIdTokenAsync(idToken);
+            return decodedToken.Uid;
+
+        }
+
     }
 }

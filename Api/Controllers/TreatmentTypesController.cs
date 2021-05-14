@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Api.Data;
 using Api.Models;
+using FirebaseAdmin.Auth;
+using FirebaseAdmin;
+using Api.Repositories;
 
 namespace Api.Controllers
 {
@@ -14,25 +17,32 @@ namespace Api.Controllers
     [ApiController]
     public class TreatmentTypesController : ControllerBase
     {
-        private readonly PatientDbContext _context;
-
-        public TreatmentTypesController(PatientDbContext context)
+        /*        private readonly PatientDbContext _context;
+        */
+        private readonly ITreatmentTypeRepository _repository;
+        private readonly FirebaseAuth auth;
+        public TreatmentTypesController(ITreatmentTypeRepository repository)
         {
-            _context = context;
+            _repository = repository;
+            auth = FirebaseAuth.GetAuth(FirebaseApp.DefaultInstance);
         }
 
         // GET: api/TreatmentTypes
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TreatmentType>>> GetTreatmentTypes()
         {
-            return await _context.TreatmentTypes.ToListAsync();
+
+            var result = await _repository.GetAll(getUID().Result);
+
+            return  result;
         }
 
         // GET: api/TreatmentTypes/5
         [HttpGet("{id}")]
         public async Task<ActionResult<TreatmentType>> GetTreatmentType(int id)
         {
-            var treatmentType = await _context.TreatmentTypes.FindAsync(id);
+            /*  var treatmentType = await _context.TreatmentTypes.FindAsync(id);*/
+            var treatmentType = await _repository.Get(getUID().Result, id);
 
             if (treatmentType == null)
             {
@@ -52,25 +62,16 @@ namespace Api.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(treatmentType).State = EntityState.Modified;
+            treatmentType.UserId = getUID().Result;
+            var result = await _repository.Update(id, treatmentType);
 
-            try
+            if (result==null)
             {
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TreatmentTypeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+          
 
-            return CreatedAtAction("GetTreatmentType", new { id = treatmentType.TreatmentTypeId }, treatmentType);
+            return  CreatedAtAction("GetTreatmentType", new { id = treatmentType.TreatmentTypeId }, treatmentType);
         }
 
         // POST: api/TreatmentTypes
@@ -78,31 +79,34 @@ namespace Api.Controllers
         [HttpPost]
         public async Task<ActionResult<TreatmentType>> PostTreatmentType(TreatmentType treatmentType)
         {
-            _context.TreatmentTypes.Add(treatmentType);
-            await _context.SaveChangesAsync();
+            treatmentType.UserId = getUID().Result;
+           var result= await  _repository.Add(treatmentType);
 
-            return CreatedAtAction("GetTreatmentType", new { id = treatmentType.TreatmentTypeId }, treatmentType);
+            return CreatedAtAction("GetTreatmentType", new { id = result.TreatmentTypeId }, result);
         }
 
         // DELETE: api/TreatmentTypes/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTreatmentType(int id)
         {
-            var treatmentType = await _context.TreatmentTypes.FindAsync(id);
+            var treatmentType = await _repository.Delete(getUID().Result, id);
             if (treatmentType == null)
             {
                 return NotFound();
             }
 
-            _context.TreatmentTypes.Remove(treatmentType);
-            await _context.SaveChangesAsync();
-
+          
             return NoContent();
         }
 
-        private bool TreatmentTypeExists(int id)
+       
+        private async Task<string> getUID()
         {
-            return _context.TreatmentTypes.Any(e => e.TreatmentTypeId == id);
+            var idToken = HttpContext.Request.Headers["Authorization"].ToString();
+            idToken = idToken.Split("key ")[1];
+            FirebaseToken decodedToken = await auth.VerifyIdTokenAsync(idToken);
+            return decodedToken.Uid;
+
         }
     }
 }
