@@ -33,7 +33,11 @@ namespace Api.Controllers
         {
             return await _context.Treatments.ToListAsync();
         }*/
+<<<<<<< HEAD
         // GET: api/Treatments/patient/5
+=======
+
+>>>>>>> e2b6a4ac6350b8fea8e60ff25f728da8175f555c
         [HttpGet("patient/{id}")]
         public async Task<ActionResult<IEnumerable<Treatment>>> GetTreatmentsByPatientId(int id)
         {

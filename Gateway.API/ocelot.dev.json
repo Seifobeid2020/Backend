@@ -25,6 +25,7 @@
       "UpstreamPathTemplate": "/gateway/Dashboard/{catchAll}/{id}",
       "UpstreamHttpMethod": [ "Get", "POST", "PUT" ]
     },
+<<<<<<< HEAD
     //Report and Advance Report Controller Handler
     //Get('report') ,
     {
@@ -108,6 +109,8 @@
       "UpstreamPathTemplate": "/gateway/TreatmentTypes/{id}",
       "UpstreamHttpMethod": [ "Delete", "put" ]
     },
+=======
+>>>>>>> e2b6a4ac6350b8fea8e60ff25f728da8175f555c
     //Patient Controller Handler
     //Get , POST
     {
@@ -135,11 +138,18 @@
       "UpstreamPathTemplate": "/gateway/Patients/{id}",
       "UpstreamHttpMethod": [ "Delete", "get", "put" ]
     },
+<<<<<<< HEAD
 
     //Expenses Controller Handler
     //Get , POST
     {
       "DownstreamPathTemplate": "/api/Expenses",
+=======
+    //ExpenseTypes Controller Handler
+    //Get , POST
+    {
+      "DownstreamPathTemplate": "/api/expensetypes",
+>>>>>>> e2b6a4ac6350b8fea8e60ff25f728da8175f555c
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
@@ -147,6 +157,7 @@
           "Port": 5001
         }
       ],
+<<<<<<< HEAD
       "UpstreamPathTemplate": "/gateway/Expenses",
       "UpstreamHttpMethod": [ "Get", "POST" ]
     },
@@ -180,6 +191,14 @@
     //Get(id) , put(id) , Delete(id)
     {
       "DownstreamPathTemplate": "/api/treatments/{id}",
+=======
+      "UpstreamPathTemplate": "/gateway/ExpenseTypes",
+      "UpstreamHttpMethod": [ "Get", "POST" ]
+    },
+    //Get(id) , put(id) , Delete(id)
+    {
+      "DownstreamPathTemplate": "/api/expensetypes/{id}",
+>>>>>>> e2b6a4ac6350b8fea8e60ff25f728da8175f555c
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
@@ -187,6 +206,7 @@
           "Port": 5001
         }
       ],
+<<<<<<< HEAD
       "UpstreamPathTemplate": "/gateway/treatments/{id}",
       "UpstreamHttpMethod": [ "Delete", "get", "put" ]
     },
@@ -202,6 +222,10 @@
       ],
       "UpstreamPathTemplate": "/gateway/treatments/patient/{id}",
       "UpstreamHttpMethod": [ "get" ]
+=======
+      "UpstreamPathTemplate": "/gateway/ExpenseTypes/{id}",
+      "UpstreamHttpMethod": [ "Delete", "get", "put" ]
+>>>>>>> e2b6a4ac6350b8fea8e60ff25f728da8175f555c
     }
   ],
   "GlobalConfiguration": {
