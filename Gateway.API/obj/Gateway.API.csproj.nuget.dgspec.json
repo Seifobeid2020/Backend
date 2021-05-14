@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\DeNTAX\\V4\\backend_1\\Backend\\Gateway.API\\Gateway.API\\Gateway.API.csproj": {}
+    "D:\\DeNTAX\\V4\\backend_1\\Backend\\Gateway.API\\Gateway.API.csproj": {}
   },
   "projects": {
-    "D:\\DeNTAX\\V4\\backend_1\\Backend\\Gateway.API\\Gateway.API\\Gateway.API.csproj": {
+    "D:\\DeNTAX\\V4\\backend_1\\Backend\\Gateway.API\\Gateway.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\DeNTAX\\V4\\backend_1\\Backend\\Gateway.API\\Gateway.API\\Gateway.API.csproj",
+        "projectUniqueName": "D:\\DeNTAX\\V4\\backend_1\\Backend\\Gateway.API\\Gateway.API.csproj",
         "projectName": "Gateway.API",
-        "projectPath": "D:\\DeNTAX\\V4\\backend_1\\Backend\\Gateway.API\\Gateway.API\\Gateway.API.csproj",
+        "projectPath": "D:\\DeNTAX\\V4\\backend_1\\Backend\\Gateway.API\\Gateway.API.csproj",
         "packagesPath": "C:\\Users\\actc\\.nuget\\packages\\",
-        "outputPath": "D:\\DeNTAX\\V4\\backend_1\\Backend\\Gateway.API\\Gateway.API\\obj\\",
+        "outputPath": "D:\\DeNTAX\\V4\\backend_1\\Backend\\Gateway.API\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\actc\\AppData\\Roaming\\NuGet\\NuGet.Config",
