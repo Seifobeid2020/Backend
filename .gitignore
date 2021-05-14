@@ -33,7 +33,9 @@ appsettings.json
 appsettings.Development.json
 Api.sln
 
-djangoProject
+/MachineLearningApi
+/djangoProject
+
 
 # Build results
 [Dd]ebug/
