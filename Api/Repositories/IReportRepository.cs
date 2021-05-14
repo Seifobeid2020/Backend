@@ -8,8 +8,8 @@ namespace Api.Repositories
 {
     public interface IReportRepository
     {
-        Task<List<ReportViewModel>> GetAllReports();
-        Task<List<AdvanceReportViewModel>> GetAllAdvanceReports();
+        Task<List<ReportViewModel>> GetAllReports(string UID);
+        Task<List<AdvanceReportViewModel>> GetAllAdvanceReports(string UID);
         
     }
 }

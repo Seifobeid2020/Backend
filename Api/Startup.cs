@@ -23,7 +23,7 @@ namespace Api
 {
     public class Startup
     {
-        static FirebaseApp App = null;
+       
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -45,7 +45,10 @@ namespace Api
                 options.UseNpgsql(Configuration.GetConnectionString("Default"));
             });
 
-
+            FirebaseApp.Create(new AppOptions()
+            {
+                Credential = GoogleCredential.FromFile("serviceAccountKey.json"),
+            });
             services.AddCors(options =>
             {
                 // The CORS policy is open for testing purposes. In a production application, you should restrict it to known origins.
@@ -60,8 +63,10 @@ namespace Api
             services.AddScoped<IReportRepository, ReportRepository>();
             services.AddScoped<IExpenseRepository, ExpenseRepository>();
             services.AddScoped<IDashboardRepository, DashboardRepository>();
-
-
+            services.AddScoped<ITreatmentRepository, TreatmentRepository>();
+            services.AddScoped<ITreatmentTypeRepository, TreatmentTypeRepository>();
+            services.AddScoped<IExpenseTypeRepository, ExpenseTypeRepository>();
+            
             services.AddControllers()
                 .AddNewtonsoftJson(options =>
                     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
@@ -75,19 +80,11 @@ namespace Api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-
+            app.UseCors("AllowAll");
             app.Use(async (context, next) =>
             {
-                if (App == null)
-                {
-                    App = FirebaseApp.Create(new AppOptions()
-                    {
-                        Credential = GoogleCredential.FromFile("serviceAccountKey.json"),
-                    });
-                }
-
-
-                FirebaseAuth auth = FirebaseAuth.GetAuth(App);
+    
+                FirebaseAuth auth = FirebaseAuth.GetAuth(FirebaseApp.DefaultInstance);
                 try
                 {
                     var idToken = context.Request.Headers["Authorization"].ToString();
@@ -122,10 +119,10 @@ namespace Api
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
             }
-
+           
             app.UseRouting();
 
-            app.UseCors("AllowAll");
+            
 
             app.UseEndpoints(endpoints =>
             {

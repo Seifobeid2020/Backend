@@ -22,10 +22,10 @@ namespace Api.Repositories
 
         
 
-        public async Task<List<ReportViewModel>> GetAllReports()
+        public async Task<List<ReportViewModel>> GetAllReports(string UID)
         {
-            var patients = await _patientRepository.GetAll();
-            var expenses = await _expenseContext.Expenses.ToListAsync();
+            var patients = await _patientRepository.GetAll(UID);
+            var expenses = await _expenseContext.Expenses.Where(e=>e.UserId == UID).ToListAsync();
 
 
             //  Console.WriteLine();
@@ -43,10 +43,10 @@ namespace Api.Repositories
             return patientReports;
 
         }
-        public async Task<List<AdvanceReportViewModel>> GetAllAdvanceReports()
+        public async Task<List<AdvanceReportViewModel>> GetAllAdvanceReports(string UID)
         {
-            List<AdvanceReportViewModel> patientReports = await _patientRepository.GetAllWithTreatments();
-            var expenses = await _expenseContext.Expenses.Include(e => e.ExpenseType).ToListAsync();
+            List<AdvanceReportViewModel> patientReports = await _patientRepository.GetAllWithTreatments(UID);
+            var expenses = await _expenseContext.Expenses.Where(e=>e.UserId==UID).Include(e => e.ExpenseType).ToListAsync();
             List<AdvanceReportViewModel> expenseReports = 
                 expenses.Select(e => 
                 new AdvanceReportViewModel() 

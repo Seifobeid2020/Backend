@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using Api.Data;
 using Api.Models;
 using Api.Models.ViewModels;
+using FirebaseAdmin.Auth;
+using FirebaseAdmin;
+using Api.Repositories;
 
 namespace Api.Controllers
 {
@@ -15,61 +18,43 @@ namespace Api.Controllers
     [ApiController]
     public class TreatmentsController : ControllerBase
     {
-        private readonly PatientDbContext _context;
-
-        public TreatmentsController(PatientDbContext context)
+       
+        private readonly ITreatmentRepository _repository;
+        private readonly FirebaseAuth auth;
+        public TreatmentsController(ITreatmentRepository repository)
         {
-            _context = context;
+            _repository = repository;
+            auth = FirebaseAuth.GetAuth(FirebaseApp.DefaultInstance);
         }
 
-        // GET: api/Treatments
+        /*// GET: api/Treatments
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Treatment>>> GetTreatments()
         {
             return await _context.Treatments.ToListAsync();
-        }
+        }*/
 
         [HttpGet("patient/{id}")]
         public async Task<ActionResult<IEnumerable<Treatment>>> GetTreatmentsByPatientId(int id)
         {
-            var treatments = await _context.Treatments.Where(treatment => treatment.PatientId == id
-                ).Include(p => p.TreatmentType)
-                .ToListAsync();
-
-            var result = new List<TreatmentViewModel>();
-            foreach (var treatment in treatments)
-            {
-
-                result.Add(new TreatmentViewModel()
-                {
-                    TreatmentId = treatment.TreatmentId,
-                    UserId = treatment.UserId,
-                    TreatmentCost = treatment.TreatmentCost,
-                    CreatedAt = treatment.CreatedAt,
-                    TreatmentImageUrl = treatment.TreatmentImageUrl,
-                    TreatmentImageName = treatment.TreatmentImageName,
-                    PatientId = treatment.PatientId,
-                    TreatmentName = treatment.TreatmentType.Name,
-                    TreatmentTypeId = treatment.TreatmentTypeId
-                });
-            }
-
+            var result = await _repository.GetAll(getUID().Result, id);
 
             return Ok(result);
         }
 
         // GET: api/Treatments/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Treatment>> GetTreatment(int id)
+        public async Task<ActionResult<Treatment>> GetTreatment(int treatmentId)
         {
-            var treatment = await _context.Treatments.FindAsync(id);
+            /*        var treatment = await _context.Treatments.FindAsync(id);*/
+            var treatment = await _repository.Get(getUID().Result, treatmentId);
 
             if (treatment == null)
             {
                 return NotFound();
             }
 
-            return treatment;
+            return Ok(treatment);
         }
 
         // PUT: api/Treatments/5
@@ -79,95 +64,55 @@ namespace Api.Controllers
         {
             if (id != treatment.TreatmentId)
             {
-                System.Console.WriteLine("Hello from Error");
+               
                 return BadRequest();
             }
 
-            _context.Entry(treatment).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TreatmentExists(id))
+            treatment.UserId = getUID().Result;
+            var result = await _repository.Update(id, treatment);
+                if (result == null)
                 {
                     return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
-            }
-
-            var treatmentType = await _context.TreatmentTypes.FindAsync(treatment.TreatmentTypeId);
-            var t = await _context.Treatments.FindAsync(id);
-
-
-            var result = new TreatmentViewModel()
-            {
-                TreatmentId = t.TreatmentId,
-                UserId = t.UserId,
-                TreatmentCost = t.TreatmentCost,
-                CreatedAt = t.CreatedAt,
-                TreatmentImageUrl = t.TreatmentImageUrl,
-                TreatmentImageName = t.TreatmentImageName,
-                PatientId = t.PatientId,
-                TreatmentName = treatmentType.Name,
-                TreatmentTypeId = t.TreatmentTypeId
-            };
-
+  
             return result;
         }
 
         // POST: api/Treatments
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Treatment>> PostTreatment(Treatment treatment)
+        public async Task<ActionResult<TreatmentViewModel>> PostTreatment(Treatment treatment)
         {
-            treatment.CreatedAt = DateTime.Now;
-            _context.Treatments.Add(treatment);
-            await _context.SaveChangesAsync();
+            treatment.UserId = getUID().Result;
+            var result = await _repository.Add(treatment);
 
-            var treatmentType = await _context.TreatmentTypes.FindAsync(treatment.TreatmentTypeId);
-
-
-            var result = new TreatmentViewModel()
-            {
-                TreatmentId = treatment.TreatmentId,
-                UserId = treatment.UserId,
-                TreatmentCost = treatment.TreatmentCost,
-                CreatedAt = treatment.CreatedAt,
-                TreatmentImageUrl = treatment.TreatmentImageUrl,
-                TreatmentImageName = treatment.TreatmentImageName,
-                PatientId = treatment.PatientId,
-                TreatmentName = treatmentType.Name,
-                TreatmentTypeId = treatment.TreatmentTypeId
-            };
-
-            return CreatedAtAction("GetTreatment", new { id = treatment.TreatmentId }, result);
+            return  Ok(result);
         }
 
         // DELETE: api/Treatments/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTreatment(int id)
         {
-            var treatment = await _context.Treatments.FindAsync(id);
+            var treatment = await _repository.Delete(getUID().Result, id);
             if (treatment == null)
             {
                 return NotFound();
             }
 
-            _context.Treatments.Remove(treatment);
-            await _context.SaveChangesAsync();
+          
 
             return NoContent();
         }
 
-        private bool TreatmentExists(int id)
+       
+        private async Task<string> getUID()
         {
-            return _context.Treatments.Any(e => e.TreatmentId == id);
+            var idToken = HttpContext.Request.Headers["Authorization"].ToString();
+            idToken = idToken.Split("key ")[1];
+            FirebaseToken decodedToken = await auth.VerifyIdTokenAsync(idToken);
+            return decodedToken.Uid;
+
         }
+
     }
 }

@@ -28,9 +28,9 @@ namespace Api.Repositories
             return  patient;
         }
 
-        public async Task<Patient> Delete(int id)
+        public async Task<Patient> Delete(string UID, int id)
         {
-            var patient = await _context.Patients.FindAsync(id);
+            var patient = await _context.Patients.Where(p => p.UserId == UID && p.PatientId == id).FirstAsync();
             if (patient == null)
             {
                 return null;
@@ -42,15 +42,15 @@ namespace Api.Repositories
             return patient;
         }
 
-        public async Task<Patient> Get(int id)
+        public async Task<Patient> Get(string UID,int id)
         {
-            var patient = await _context.Patients.FindAsync(id);
+            var patient = await _context.Patients.Where(p=>p.UserId==UID && p.PatientId ==id).FirstAsync();
             return patient;
         }
 
-        public async Task<List<PatientViewModel>> GetAll()
+        public async Task<List<PatientViewModel>> GetAll(string UID)
         {
-            var patients = await _context.Patients.Include(p => p.Treatments)
+            var patients = await _context.Patients.Where(p=>p.UserId == UID).Include(p => p.Treatments)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
@@ -73,11 +73,12 @@ namespace Api.Repositories
             }
             return  result;
         }
-        public async Task<List<AdvanceReportViewModel>> GetAllWithTreatments()
+        public async Task<List<AdvanceReportViewModel>> GetAllWithTreatments(string UID)
         {
             return await (from patient in _context.Patients
                             join t in _context.Treatments on patient.PatientId equals t.PatientId
                             join ty in _context.TreatmentTypes on t.TreatmentTypeId equals ty.TreatmentTypeId
+                            where patient.UserId.Contains(UID)
                             select new AdvanceReportViewModel()
                             {
                                 ReportKind = "Patient",
@@ -90,9 +91,12 @@ namespace Api.Repositories
                 
         }
 
-        public async Task<List<FivePatientViewModel>> GetLastFivePatients()
+     
+
+        public async Task<List<FivePatientViewModel>> GetLastFivePatients(string UID)
         {
             return await (from p in _context.Patients
+                          where p.UserId.Contains(UID)
                           orderby p.CreatedAt descending
                           select new FivePatientViewModel() {
                               FullName = p.FirstName + " " + p.LastName ,
@@ -103,25 +107,27 @@ namespace Api.Repositories
                           } ).Take(5).ToListAsync();
         }
 
-        public async Task<decimal> GetNewWeeklyPatientsCount()
+        public async Task<decimal> GetNewWeeklyPatientsCount(string UID)
         {
             var lastWeek = DateTime.Now.AddDays(-7);
             return await _context.Patients
-                                 .Where(p => DateTime.Compare(p.CreatedAt, lastWeek) >= 0).CountAsync();
+                                 .Where (p =>p.UserId == UID
+                                 &&
+                                 DateTime.Compare(p.CreatedAt, lastWeek) >= 0).CountAsync();
         }
 
-        public async Task<decimal> GetPatientsCount()
+        public async Task<decimal> GetPatientsCount(string UID)
         {
-            return await _context.Patients.CountAsync();
+            return await _context.Patients.Where(p => p.UserId == UID).CountAsync();
         }
 
-        public async Task<decimal> GetTotalIncomes()
+        public async Task<decimal> GetTotalIncomes(string UID)
         {
            var treatments= await _context.Treatments.ToListAsync();
-           return treatments.Sum(tre => tre.TreatmentCost);
+           return treatments.Where(t => t.UserId == UID).Sum(tre => tre.TreatmentCost);
         }
 
-        public async Task<Patient> Update(int id, Patient patient)
+        public async Task<PatientViewModel> Update(int id, Patient patient)
         {
             _context.Entry(patient).State = EntityState.Modified;
 
@@ -141,11 +147,24 @@ namespace Api.Repositories
                 }
             }
 
-            var result = await _context.Patients.FindAsync(id);
+            var patientResult = await _context.Patients.Where(p => p.PatientId.Equals(id) && p.UserId.Contains(patient.UserId)).Include(p => p.Treatments)
+              .FirstOrDefaultAsync();
 
-            return  result;
+            var totalCost = patientResult.Treatments.Sum(t => t.TreatmentCost);
+            PatientViewModel newPatient = new PatientViewModel()
+            {
+                PatientId = patientResult.PatientId,
+                UserId = patientResult.UserId,
+                Age = patientResult.Age,
+                Gender = patientResult.Gender,
+                FirstName = patientResult.FirstName,
+                LastName = patientResult.LastName,
+                PhoneNumber = patientResult.PhoneNumber,
+                TotalTreatmentCost = totalCost,
+                CreatedAt = patientResult.CreatedAt
+            };
 
-
+            return newPatient;
         }
         private bool PatientExists(int id)
         {
