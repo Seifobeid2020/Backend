@@ -9,16 +9,16 @@ namespace Api.Repositories
 {
     public interface IPatientRepository
     {
-        Task<List<PatientViewModel>> GetAll();
-        Task<List<AdvanceReportViewModel>> GetAllWithTreatments();
-        Task<Patient> Get(int id);
+        Task<List<PatientViewModel>> GetAll(string UID);
+        Task<List<AdvanceReportViewModel>> GetAllWithTreatments(string UID);
+        Task<Patient> Get(string UID,int id);
         Task<Patient> Add(Patient patient);
-        Task<Patient> Update(int id, Patient patient);
-        Task<Patient> Delete(int id);
-        Task<decimal> GetPatientsCount();
-        Task<decimal> GetTotalIncomes();
-        Task<decimal> GetNewWeeklyPatientsCount();
-        Task<List<FivePatientViewModel>> GetLastFivePatients();
+        Task<PatientViewModel> Update(int id, Patient patient);
+        Task<Patient> Delete(string UID, int id);
+        Task<decimal> GetPatientsCount(string UID);
+        Task<decimal> GetTotalIncomes(string UID);
+        Task<decimal> GetNewWeeklyPatientsCount(string UID);
+        Task<List<FivePatientViewModel>> GetLastFivePatients(string UID);
 
      
 

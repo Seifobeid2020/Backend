@@ -8,12 +8,12 @@ namespace Api.Repositories
 {
     public interface IDashboardRepository
     {
-        Task<decimal> PatientsCount();
-        Task<decimal> TotalExpanse();
-        Task<decimal> TotalIncomes();
-        Task<decimal> NewWeeklyPatientsCount();
-        Task<List<FivePatientViewModel>> LastFivePatients();
-        Task<List<FiveExpenseViewModel>> LastFiveExpenses();
+        Task<decimal> PatientsCount(string UID);
+        Task<decimal> TotalExpanse(string UID);
+        Task<decimal> TotalIncomes(string UID);
+        Task<decimal> NewWeeklyPatientsCount(string UID);
+        Task<List<FivePatientViewModel>> LastFivePatients(string UID);
+        Task<List<FiveExpenseViewModel>> LastFiveExpenses(string UID);
 
 
     }

@@ -9,13 +9,13 @@ namespace Api.Repositories
 {
    public interface IExpenseRepository
     {
-        Task<List<Expense>> GetAll();
-        Task<Expense> Get(int id);
+        Task<List<Expense>> GetAll(string UID);
+        Task<Expense> Get(string UID, int id);
         Task<Expense> Add(Expense expense);
         Task<Expense> Update(int id, Expense expense);
-        Task<Expense> Delete(int id);
-        Task<decimal> GetTotalExpenses();
-        Task<List<FiveExpenseViewModel>> GetLastFiveExpenses();
+        Task<Expense> Delete(string UID,int id);
+        Task<decimal> GetTotalExpenses(string UID);
+        Task<List<FiveExpenseViewModel>> GetLastFiveExpenses(string UID);
 
     }
 }
