@@ -17,20 +17,21 @@ namespace Api.Repositories
             _context = context;
         }
 
-        public async Task<List<Expense>> GetAll()
+        public async Task<List<Expense>> GetAll(string UID)
         {
-            return await _context.Expenses.Include(e => e.ExpenseType).ToListAsync();
+            return await _context.Expenses.Where(e=>e.UserId== UID).Include(e => e.ExpenseType).ToListAsync();
         }
-        public async Task<Expense> Get(int id)
+        public async Task<Expense> Get(string UID,int id)
         {
             return await _context.Expenses
                .Include(e => e.ExpenseType)
-               .Where(e => e.ExpenseId == id)
+               .Where(e => e.UserId.Contains(UID) && e.ExpenseId.Equals(id) )
                .FirstOrDefaultAsync();
         }
 
         public async Task<Expense> Update(int id, Expense expense)
         {
+          
             _context.Entry(expense).State = EntityState.Modified;
             try
             {
@@ -58,13 +59,13 @@ namespace Api.Repositories
             await _context.SaveChangesAsync();
 
             var newExpense = await _context.Expenses
-                                            .Where(e => e.ExpenseId == expense.ExpenseId)
+                                            .Where(e => e.UserId.Contains(expense.UserId)&& e.ExpenseId.Equals(expense.ExpenseId))
                                             .Include(e => e.ExpenseType)
                                             .FirstAsync();
             return newExpense;
         }
 
-        public async Task<Expense> Delete(int id)
+        public async Task<Expense> Delete(string UID,int id)
         {
             var expense = await _context.Expenses.FindAsync(id);
             if (expense == null)
@@ -81,10 +82,11 @@ namespace Api.Repositories
             return _context.Expenses.Any(e => e.ExpenseId == id);
         }
 
-        public async Task<List<FiveExpenseViewModel>> GetLastFiveExpenses()
+        public async Task<List<FiveExpenseViewModel>> GetLastFiveExpenses(string UID)
         {
             return await(from ex in _context.Expenses
                          join exType in _context.ExpenseTypes on ex.ExpenseTypeId equals exType.ExpenseTypeId
+                         where ex.UserId.Contains(UID)
                          orderby ex.CreatedAt descending
                          select new FiveExpenseViewModel()
                          {
@@ -95,9 +97,9 @@ namespace Api.Repositories
                          }).Take(5).ToListAsync();
         }
 
-        public async Task<decimal> GetTotalExpenses()
+        public async Task<decimal> GetTotalExpenses(string UID)
         {
-            return await _context.Expenses.SumAsync(e => e.ExpenseValue);
+            return await _context.Expenses.Where(e=>e.UserId == UID).SumAsync(e => e.ExpenseValue);
         }
     }
 }

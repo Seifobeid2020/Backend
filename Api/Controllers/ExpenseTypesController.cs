@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Api.Data;
 using Api.Models;
+using FirebaseAdmin.Auth;
+using FirebaseAdmin;
+using Api.Repositories;
 
 namespace Api.Controllers
 {
@@ -14,25 +17,29 @@ namespace Api.Controllers
     [ApiController]
     public class ExpenseTypesController : ControllerBase
     {
-        private readonly ExpenseDbContext _context;
-
-        public ExpenseTypesController(ExpenseDbContext context)
+/*        private readonly ExpenseDbContext _context;*/
+        private readonly IExpenseTypeRepository _repository;
+        private readonly FirebaseAuth auth;
+        public ExpenseTypesController(IExpenseTypeRepository repository)
         {
-            _context = context;
+            _repository = repository;
+            auth = FirebaseAuth.GetAuth(FirebaseApp.DefaultInstance);
         }
 
         // GET: api/ExpenseTypes
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ExpenseType>>> GetExpenseTypes()
         {
-            return await _context.ExpenseTypes.ToListAsync();
+            var resutl = await _repository.GetAll(getUID().Result);
+            Console.WriteLine(resutl);
+            return resutl;
         }
 
         // GET: api/ExpenseTypes/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ExpenseType>> GetExpenseType(int id)
         {
-            var expenseType = await _context.ExpenseTypes.FindAsync(id);
+            var expenseType = await _repository.Get(getUID().Result,id);
 
             if (expenseType == null)
             {
@@ -47,30 +54,17 @@ namespace Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutExpenseType(int id, ExpenseType expenseType)
         {
-            if (id != expenseType.ExpenseTypeId)
+           if (id != expenseType.ExpenseTypeId)
             {
                 return BadRequest();
             }
 
-            _context.Entry(expenseType).State = EntityState.Modified;
-
-            try
+            var result = _repository.Update(id, expenseType);
+            if (result.Result == null)
             {
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ExpenseTypeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return CreatedAtAction("GetExpenseType", new { id = expenseType.ExpenseTypeId }, expenseType);
+            return CreatedAtAction("GetExpenseType", new { id = result.Result.ExpenseTypeId }, result.Result);
         }
 
         // POST: api/ExpenseTypes
@@ -78,31 +72,47 @@ namespace Api.Controllers
         [HttpPost]
         public async Task<ActionResult<ExpenseType>> PostExpenseType(ExpenseType expenseType)
         {
-            _context.ExpenseTypes.Add(expenseType);
-            await _context.SaveChangesAsync();
+            /*  _context.ExpenseTypes.Add(expenseType);
+              await _context.SaveChangesAsync();*/
 
-            return CreatedAtAction("GetExpenseType", new { id = expenseType.ExpenseTypeId }, expenseType);
+            expenseType.UserId = await getUID();
+            var result =await  _repository.Add(expenseType);
+
+            return CreatedAtAction("GetExpenseType", new { id = result.ExpenseTypeId }, result);
         }
 
         // DELETE: api/ExpenseTypes/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteExpenseType(int id)
         {
-            var expenseType = await _context.ExpenseTypes.FindAsync(id);
-            if (expenseType == null)
+            /* var expenseType = await _context.ExpenseTypes.FindAsync(id);
+             if (expenseType == null)
+             {
+                 return NotFound();
+             }
+
+             _context.ExpenseTypes.Remove(expenseType);
+             await _context.SaveChangesAsync();*/
+
+            var result = await _repository.Delete(getUID().Result, id);
+
+            if (result == null)
             {
                 return NotFound();
             }
-
-            _context.ExpenseTypes.Remove(expenseType);
-            await _context.SaveChangesAsync();
-
+            Console.WriteLine(result);
             return NoContent();
         }
 
-        private bool ExpenseTypeExists(int id)
+       
+
+        private async Task<string> getUID()
         {
-            return _context.ExpenseTypes.Any(e => e.ExpenseTypeId == id);
+            var idToken = HttpContext.Request.Headers["Authorization"].ToString();
+            idToken = idToken.Split("key ")[1];
+            FirebaseToken decodedToken = await auth.VerifyIdTokenAsync(idToken);
+            return decodedToken.Uid;
+
         }
     }
 }
